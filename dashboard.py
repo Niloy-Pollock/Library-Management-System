@@ -238,33 +238,39 @@ class ArticleDashboard:
         ]
 
     def create_article_grid(self):
-        # Define the number of columns to fit 3 cards per row
-        columns = 3
+        # Update the number of columns dynamically based on the window width
+        available_width = self.canvas.winfo_width()
+        card_width = 330  # Approximate width for each card including padding
+        columns = max(1, available_width // card_width)  # At least 1 column
+        
         row = 0
         col = 0
 
+        # Remove any existing widgets in the articles_frame
+        for widget in self.articles_frame.winfo_children():
+            widget.destroy()
+
         # Loop through each article and create a card
         for article in self.articles:
-            # Adjust the card size to fit three in a row
+            # Adjust the card size to fit dynamically in a row
             card = tk.Frame(self.articles_frame, bg="#444", bd=1, relief="solid", width=200, height=200)
             card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-            title_label = tk.Label(card, text=article["title"], fg="white", font=("Arial", 12), bg="#444", wraplength=330)
+            title_label = tk.Label(card, text=article["title"], fg="white", font=("Arial", 12), bg="#444", wraplength=300)
             title_label.pack(pady=5)
 
-            desc_label = tk.Label(card, text=article["description"], fg="white", font=("Arial", 10), bg="#444", wraplength=330)
+            desc_label = tk.Label(card, text=article["description"], fg="white", font=("Arial", 10), bg="#444", wraplength=300)
             desc_label.pack(pady=5)
 
             col += 1
-            if col >= columns:  # Move to the next row after 3 columns
+            if col >= columns:  # Move to the next row after filling the columns
                 col = 0
                 row += 1
 
-        # Ensure that all columns expand equally to fit the available space
+        # Configure column and row stretching
         for i in range(columns):
             self.articles_frame.grid_columnconfigure(i, weight=1, uniform="equal")
 
-        # Ensure rows expand as needed
         for i in range(row + 1):
             self.articles_frame.grid_rowconfigure(i, weight=1)
 
@@ -272,9 +278,11 @@ class ArticleDashboard:
         self.articles_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
-        # Now, bind the canvas to the scroll region
-        self.canvas.yview_moveto(0)  # Start at the top of the scrollable area
+        # Bind to window resize event to recalculate layout
+        self.canvas.bind("<Configure>", self.on_resize)
 
+    def on_resize(self, event):
+        self.create_article_grid()  # Recreate grid on resize
 
     def create_profile_button(self):
         # Canvas for the round profile button
